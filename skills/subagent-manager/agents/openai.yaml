@@ -1,5 +1,5 @@
 interface:
   display_name: "Subagent Manager"
-  short_description: "按任务选择原生或外部子代理，管理交接与验收"
+  short_description: "按任务选择本家与外部子代理，管理交接验收、额度并积累可修订经验"
 policy:
   allow_implicit_invocation: true
