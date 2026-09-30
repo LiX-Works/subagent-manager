@@ -1,26 +1,100 @@
 # subagent-manager
 
-一份可改造的 **Codex 子代理工作流 Skill**：判断何时委派、在 Luna／6.1 Sol／Astra 间选择模型与思考档位、把独立任务交给执行或审查代理，并验收结果。日常主要用Luna、Gemini和6.1；Astra保留为少量高档对照或兜底。它也包含可选的 Gemini AGY CLI、Grok CLI 路径，以及 Grok 每周额度查询和按日预算的规则。
+让 Codex 更有依据地使用子代理：判断哪些工作值得委派，为任务选择模型和思考强度，并明确交接与验收方式。
 
-这里发布的是一套**有具体模型偏好和额度阈值的个人工作流案例**，不是对所有账户的最优配置或克隆后即用的工具包。模型、档位、可用代理工具、订阅和 CLI 版本会变化；先按[适配说明](docs/自定义规则.md)核对自己的环境。历史评测数字有日期，仅作选择依据，不是实时排名。[Codex 定价与用量](https://learn.chatgpt.com/docs/pricing)也提示订阅额度不能直接按公开价格换算。
+这个项目整理了我在实际使用中逐步调整的一套工作流。它适合已经在用 Codex、希望改善多代理分工的人，也可以作为编写自己规则的参考。核心是一份 [Skill](skills/subagent-manager/SKILL.md)，附带模型选择、任务交接和外部 CLI 的说明。
 
-## 包含什么
+## 什么时候值得用子代理
 
-- [`skills/subagent-manager/SKILL.md`](skills/subagent-manager/SKILL.md)：委派条件、显式指定子代理模型与强度、交接和验收。
-- `references/`：模型选用、关键判断点咨询、AGY／Grok 调用、Grok 日预算和可修订的经验记录。Grok 预算示例在日消耗达到整周额度的 1/7、1.5/7、2/7 时分别检查、提醒和默认停止新派发；每个有边界的 Grok 子任务结束后查一次 `/usage`。
-- `scripts/`：可选的 AGY 调用包装和 Grok 快照账本；不安装 CLI、不登录、不读取认证。账本不会主动查询账户。
-- [`extras/windows-proxy/`](extras/windows-proxy/README.md)：仅在需要本地网络代理的 Windows 环境使用。直连用户不用配置端口，也不用运行该模块。
+在一项任务中，主 Agent 往往同时承担理解需求、查资料、实现方案和检查结果等工作。其中一些步骤可以独立交付，交给子代理后，主 Agent 能继续推进核心分析，也能少接收一部分冗长的中间输出。
 
-## 安装与使用
+这份 Skill 主要考虑几类情形：
 
-将 `skills/subagent-manager/` 整个文件夹复制到自己的 `$HOME/.agents/skills/`；也可放进项目的 `.agents/skills/`。已有同名 Skill 时先比较，不直接覆盖。Codex 通常会发现 Skill 变更，若当前任务未显示，可重启 Codex 后检查。[官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills)
+- 已有较多材料，需要按统一要求提取信息、分类或逐项核对。
+- 主任务仍在推进，同时有一部分范围明确的实现或检查可以独立完成。
+- 方案已经形成，需要另一个上下文检查关键假设、失效情形和遗漏。
 
-在任务中提到 `$subagent-manager`，或让 Codex 按请求自动选用。先用一个范围清楚的任务测试：当前环境是否能在子代理调用参数中显式指定模型和思考强度，以及实际返回的模型是否符合选择。模型或 CLI 不可用时应说明并跳过对应路径，不用提示词假装切换成功。
+是否委派，要看交接是否有收益。任务短或文件少也可能适合；文件多、题目复杂，也不意味着必须多开几个 Agent。紧密依赖主任务上下文的步骤，通常由主 Agent 继续做更合适。
 
-主代理已使用6.1 Ultra时，委派重点是分担工作、隔离上下文与独立审查，不把另开同型号代理自动当成能力升级。子代理Ultra保留可选但默认不选，也不保证更主动；需要下一层委派时明确交代职责，Max也可在工具允许时执行。
+## 一个分工例子
 
-AGY 和 Grok **均为可选依赖**；只使用本家 Codex 子代理时无需安装它们。若要启用外部 CLI，请自行安装和登录，并先验证当前模型、调用参数、权限与计费方式。AGY 包装脚本默认不指定代理，按进程继承的网络环境运行；需要代理时显式传入实际 HTTP(S) 或 Mixed 端口。Grok `grok usage <SESSION_ID>`查看指定会话的 Token／成本，交互界面 `/usage`查看账户周额度，两者不是同一个统计量。
+假设要核查一份技术方案，同时阅读 20 份已经下载的资料。可以先这样安排：
 
-仅使用脚本时才需要相应运行环境：`quota-ledger.py` 使用 Python 3 标准库，`invoke-agy.ps1` 需要 PowerShell 7 和已安装的 AGY CLI。两者都不应被当作自动安装、自动登录或自动充值工具。
+| 角色 | 负责什么 | 交回什么 |
+|---|---|---|
+| 主 Agent | 理解目标和约束，推进核心分析，整理最终方案 | 完整成果及其依据 |
+| Luna Max | 按指定字段阅读资料，并对照原文 | 字段表、出处、疑点和未处理项 |
+| 6.1 Sol Xhigh，按需加入 | 用独立上下文审查已经形成的方案 | 关键假设、具体问题和检查建议 |
 
-这份仓库可独立使用；多源搜索工作流可以另行搭配，但不是前置依赖。内容按 [MIT 许可证](LICENSE)开放。
+这里以作者常用的 6.1 Sol Ultra 作主 Agent 为例。你可以使用自己的主模型，分工仍按任务决定。独立审查也可以使用与主 Agent 相同的模型；它的价值在于重新组织材料、核对成果，而不必被解释成一次模型升级。
+
+主 Agent 要交清目标、必要材料、允许的操作范围和完成标准。子代理返回后，再根据来源或适当测试验收；多个模型给出相同答案，也不能代替事实核验。
+
+## 当前的模型分工
+
+下面是这份工作流采用的默认候选，可以按你的任务表现调整。模型和档位是否可用，以当前 Codex 工具与账户为准。
+
+| 候选 | 主要用途 | 选择时考虑什么 |
+|---|---|---|
+| **GPT-6 Luna Max** | 常规提取、代码定位、小改动与检查 | 任务明确、容易验收，尤其需要 Codex 已配置的 Skill、MCP 或项目工具时 |
+| **Gemini 3.8 Flash High**，可选 AGY CLI | 材料齐备的批量阅读、分类、提取与分析 | 能一次交接，后续很少需要主 Agent 代跑工具时 |
+| **GPT-6.1 Sol** | 独立复杂任务、方案审查和上下文隔离 | 一般复杂任务通常选 High；难以判断时选 Xhigh；其他档位按任务选择 |
+| **GPT-6 Astra** | 少量专项对照或兜底 | 有具体理由期待额外收益时才用，主要考虑 Max，Xhigh 按需 |
+| **Grok CLI**，可选 | X 原帖与讨论串研究，也用于有价值的网页调研和复核 | 需要追踪原始讨论、多方观点或时效性信息时 |
+
+Luna 和 Gemini 按材料与工具条件分工。AGY 是独立的 CLI，它有自己的工具能力，但不会自动共享 Codex 中已经配置好的整套 Skill、MCP 和搜索入口。需要频繁来回搬运材料时，Luna 通常更方便。
+
+每次新建子代理，都要在实际调用参数中同时指定模型与思考强度。仅在提示词里写模型名称，不等于完成了选择，也不能依赖主 Agent 的设置自动继承。
+
+对子代理，Ultra 保留为可选档位、默认不选；它不保证更主动委派或更强的单模型能力。需要子代理组织下一层工作时，应明确交代这项职责；Max 也可以在工具允许时继续委派。通常由主 Agent 统一协调一级子代理，有明确收益时再考虑嵌套。
+
+完整档位、旧模型回退与评测依据见 [模型选择规则](skills/subagent-manager/references/native-models.md)。
+
+## 开始使用
+
+先确认你的 Codex 环境能够使用子代理。然后：
+
+1. 下载仓库，将 `skills/subagent-manager/` 整个文件夹放到个人的 `$HOME/.agents/skills/`，或项目的 `.agents/skills/`。选择适合的一个位置即可；已有同名 Skill 时，先比较你改过的规则。
+2. 在任务中提到 `$subagent-manager`，或由 Codex 根据请求选用。若没有显示新 Skill，可重启 Codex 后检查。[官方安装说明](https://learn.chatgpt.com/docs/build-skills)
+3. 先用一个范围清楚的任务试用，观察实际选用的模型、交接是否完整，以及结果是否满足要求。
+
+例如：
+
+```text
+使用 $subagent-manager 协助核查这份技术方案。
+
+已有资料位于项目的 materials 目录，需要提取指定字段并核对出处。
+请判断哪些部分适合独立委派，简要说明实际选用的模型和思考强度，
+主 Agent 继续负责方案分析与最终验收。
+```
+
+Skill 提供的是 Codex 在任务中读取的规则。实际执行依赖当前可用的代理工具；模型或接口不可用时，应说明情况，再选择能完成任务的路径。
+
+## 按需接入的扩展
+
+只使用 Codex 内置子代理，就可以从上面的流程开始。以下部分按需要接入：
+
+| 扩展 | 用途 | 需要准备什么 |
+|---|---|---|
+| [AGY / Gemini](skills/subagent-manager/references/google.md) | 将材料齐备的任务交给独立 CLI | 已安装并登录的 AGY CLI；使用附带包装脚本时需要 PowerShell 7 |
+| [Grok](skills/subagent-manager/references/grok.md) | 深入检索原帖、讨论和相关资料 | 已安装并登录的 Grok CLI，以及适用的免费或订阅额度 |
+| [Grok 额度规则](skills/subagent-manager/references/grok-budget.md) | 按子任务检查账户周额度，并记录日消耗 | 可读取的实际账户用量；使用账本脚本时需要 Python 3 |
+| [Windows 代理模块](extras/windows-proxy/README.md) | 为单次 CLI 调用设置进程级网络代理 | 需要代理时，填入自己客户端实际使用的 HTTP(S) 或 Mixed 端口 |
+
+Grok 交互界面的 `/usage` 查看账户每周用量和重置时间，`grok usage <SESSION_ID>` 查看某个会话的 Token 与成本。附带账本只记录输入的快照，本身不会查询账户；两类数据要分别使用。
+
+代理脚本是可选示例。直连环境不用配置端口或运行它；脚本也不代替 CLI 的安装和登录。
+
+## 适配与继续阅读
+
+这份工作流保留了具体的模型偏好和 Grok 预算示例，方便读者看到一套完整做法。使用前，按自己的模型权限、工具环境、时区和额度安排调整，再根据实际结果迭代。公开评测是选型参考，不能直接换算成你的订阅可用任务数。
+
+| 想了解或调整的内容 | 对应文件 |
+|---|---|
+| 实际执行的委派、交接与验收规则 | [SKILL.md](skills/subagent-manager/SKILL.md) |
+| 模型候选、思考档位与证据边界 | [模型选择](skills/subagent-manager/references/native-models.md) |
+| 顾问、执行代理、独立审查及嵌套委派 | [任务交接](skills/subagent-manager/references/delegation.md) |
+| 安装后应核对的环境和个人默认值 | [自定义规则](docs/自定义规则.md) |
+| 实践观察与后续修订依据 | [经验记录](skills/subagent-manager/references/experience.md) |
+
+本仓库可以独立使用，也可以按需搭配 [multi-source-search](https://github.com/LiX-Works/multi-source-search) 处理多源资料检索。版本说明见 [Releases](https://github.com/LiX-Works/subagent-manager/releases)，内容按 [MIT 许可证](LICENSE)开放。
