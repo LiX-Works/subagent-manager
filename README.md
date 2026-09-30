@@ -1,100 +1,104 @@
 # subagent-manager
 
-让 Codex 更有依据地使用子代理：判断哪些工作值得委派，为任务选择模型和思考强度，并明确交接与验收方式。
+**English** | [简体中文](README.zh-CN.md)
 
-这个项目整理了我在实际使用中逐步调整的一套工作流。它适合已经在用 Codex、希望改善多代理分工的人，也可以作为编写自己规则的参考。核心是一份 [Skill](skills/subagent-manager/SKILL.md)，附带模型选择、任务交接和外部 CLI 的说明。
+A Codex Skill for deciding when to delegate, choosing models and reasoning effort, and planning handoffs and reviews.
 
-## 什么时候值得用子代理
+This repository collects a workflow I have refined through everyday use. It is intended for anyone using Codex for research, writing, data extraction, or programming who wants a clearer division of labor. The core is a [Skill](skills/subagent-manager/SKILL.md)—a set of working rules Codex reads during a task—accompanied by model recommendations, external CLI notes, and handoff guidelines.
 
-在一项任务中，主 Agent 往往同时承担理解需求、查资料、实现方案和检查结果等工作。其中一些步骤可以独立交付，交给子代理后，主 Agent 能继续推进核心分析，也能少接收一部分冗长的中间输出。
+The homepage is bilingual. The Skill and its detailed reference documents are currently written in Chinese.
 
-这份 Skill 主要考虑几类情形：
+## When delegation helps
 
-- 已有较多材料，需要按统一要求提取信息、分类或逐项核对。
-- 主任务仍在推进，同时有一部分范围明确的实现或检查可以独立完成。
-- 方案已经形成，需要另一个上下文检查关键假设、失效情形和遗漏。
+A capable main agent, such as 6.1 Sol Ultra, can handle much of the work directly. Delegate when a separate task or context helps; account for the time needed to prepare materials and review the result.
 
-是否委派，要看交接是否有收益。任务短或文件少也可能适合；文件多、题目复杂，也不意味着必须多开几个 Agent。紧密依赖主任务上下文的步骤，通常由主 Agent 继续做更合适。
+Delegation offers three common benefits:
 
-## 一个分工例子
+1. **Context isolation**: Keeping extensive reading, data extraction, or intermediate logs in a separate context helps the main agent remain focused on core analysis.
+2. **Parallel progress**: Self-contained tasks with clear boundaries can proceed alongside the main train of thought.
+3. **Independent review**: Reviewing a proposed plan in a separate context can reveal unstated assumptions, edge cases, and omissions. It does not remove bias or replace evidence.
 
-假设要核查一份技术方案，同时阅读 20 份已经下载的资料。可以先这样安排：
+Short tasks can be worth delegating if the deliverable is clear. Conversely, tasks that depend heavily on the ongoing dialogue or require frequent back-and-forth are usually better handled directly by the main agent.
 
-| 角色 | 负责什么 | 交回什么 |
+## A practical example
+
+Consider checking a technical plan alongside 20 downloaded reference documents. One practical division of labor is:
+
+| Role | Responsibility | Deliverable |
 |---|---|---|
-| 主 Agent | 理解目标和约束，推进核心分析，整理最终方案 | 完整成果及其依据 |
-| Luna Max | 按指定字段阅读资料，并对照原文 | 字段表、出处、疑点和未处理项 |
-| 6.1 Sol Xhigh，按需加入 | 用独立上下文审查已经形成的方案 | 关键假设、具体问题和检查建议 |
+| Main agent *(e.g., 6.1 Sol Ultra)* | Clarify goals and constraints, guide core analysis, coordinate tasks, and assemble the final result | Final assessment and integrated findings |
+| Luna Max | Read the 20 documents, extract specified fields, and verify citations against the text | Structured data table, source references, questions, and unresolved items |
+| 6.1 Sol Xhigh *(if helpful)* | Review the plan in a separate context using background materials and requirements | Audit of key assumptions, concrete concerns, and suggested checks |
 
-这里以作者常用的 6.1 Sol Ultra 作主 Agent 为例。你可以使用自己的主模型，分工仍按任务决定。独立审查也可以使用与主 Agent 相同的模型；它的价值在于重新组织材料、核对成果，而不必被解释成一次模型升级。
+When handing off work, the main agent should provide the objective, necessary materials, constraints, and acceptance criteria. Returned work should be checked against original sources or tests; agreement between models is not proof of fact.
 
-主 Agent 要交清目标、必要材料、允许的操作范围和完成标准。子代理返回后，再根据来源或适当测试验收；多个模型给出相同答案，也不能代替事实核验。
+## Model roles and parameters
 
-## 当前的模型分工
+These default candidates reflect practical tradeoffs between task requirements and tool availability. Model and effort availability depends on your Codex setup and account tier.
 
-下面是这份工作流采用的默认候选，可以按你的任务表现调整。模型和档位是否可用，以当前 Codex 工具与账户为准。
-
-| 候选 | 主要用途 | 选择时考虑什么 |
+| Candidate | Primary use | Selection considerations |
 |---|---|---|
-| **GPT-6 Luna Max** | 常规提取、代码定位、小改动与检查 | 任务明确、容易验收，尤其需要 Codex 已配置的 Skill、MCP 或项目工具时 |
-| **Gemini 3.8 Flash High**，可选 AGY CLI | 材料齐备的批量阅读、分类、提取与分析 | 能一次交接，后续很少需要主 Agent 代跑工具时 |
-| **GPT-6.1 Sol** | 独立复杂任务、方案审查和上下文隔离 | 一般复杂任务通常选 High；难以判断时选 Xhigh；其他档位按任务选择 |
-| **GPT-6 Astra** | 少量专项对照或兜底 | 有具体理由期待额外收益时才用，主要考虑 Max，Xhigh 按需 |
-| **Grok CLI**，可选 | X 原帖与讨论串研究，也用于有价值的网页调研和复核 | 需要追踪原始讨论、多方观点或时效性信息时 |
+| **GPT-6 Luna Max** | Routine extraction, locating code, small edits, and checks | Tasks with clear criteria and straightforward verification, especially when relying on Codex Skills, MCP tools, search, or project tools |
+| **Gemini 3.8 Flash High** *(via optional AGY CLI)* | Batch reading, classification, extraction, and analysis with materials ready | Tasks with prepared inputs that need little support from the main agent. AGY has its own tools and MCP support, but does not automatically share the Skills, MCP integrations, or search tools configured in Codex |
+| **GPT-6.1 Sol** | Complex independent tasks, plan review, and separate-context analysis | Usually High for complex tasks; default to Xhigh when difficulty is hard to assess; other levels as needed |
+| **GPT-6 Astra** | Occasional specialized comparisons or fallbacks | Not selected by default; use when there is a concrete reason to expect added value, mainly Max with Xhigh as needed. Advisor is a role, not bound to Astra |
+| **Grok CLI** *(optional)* | Research on X posts and threads, plus useful web research and verification | Situations that benefit from original discussions, diverse perspectives, or fast updates. Supports sequential queries under quota safeguards |
 
-Luna 和 Gemini 按材料与工具条件分工。AGY 是独立的 CLI，它有自己的工具能力，但不会自动共享 Codex 中已经配置好的整套 Skill、MCP 和搜索入口。需要频繁来回搬运材料时，Luna 通常更方便。
+### Explicit model and reasoning parameters
 
-每次新建子代理，都要在实际调用参数中同时指定模型与思考强度。仅在提示词里写模型名称，不等于完成了选择，也不能依赖主 Agent 的设置自动继承。
+**Every new subagent must have both its model and reasoning effort explicitly set in the actual invocation parameters.** Mentioning a model name inside prompt text is not enough, and you should not rely on implicit inheritance from the main agent.
 
-对子代理，Ultra 保留为可选档位、默认不选；它不保证更主动委派或更强的单模型能力。需要子代理组织下一层工作时，应明确交代这项职责；Max 也可以在工具允许时继续委派。通常由主 Agent 统一协调一级子代理，有明确收益时再考虑嵌套。
+Ultra remains an option for subagents but is not selected by default. It does not guarantee more proactive delegation or stronger single-agent capabilities. The main agent usually coordinates the first level of subagents. Max can also delegate if the tools allow it. If a subagent must coordinate a further tier, state that responsibility clearly and specify explicit models and effort levels for each tier.
 
-完整档位、旧模型回退与评测依据见 [模型选择规则](skills/subagent-manager/references/native-models.md)。
+See [model selection rules](skills/subagent-manager/references/native-models.md) for full reasoning tiers, older-model fallbacks, and the limits of benchmark evidence.
 
-## 开始使用
+## Getting started
 
-先确认你的 Codex 环境能够使用子代理。然后：
+You can start with Codex's built-in subagents if your environment supports them:
 
-1. 下载仓库，将 `skills/subagent-manager/` 整个文件夹放到个人的 `$HOME/.agents/skills/`，或项目的 `.agents/skills/`。选择适合的一个位置即可；已有同名 Skill 时，先比较你改过的规则。
-2. 在任务中提到 `$subagent-manager`，或由 Codex 根据请求选用。若没有显示新 Skill，可重启 Codex 后检查。[官方安装说明](https://learn.chatgpt.com/docs/build-skills)
-3. 先用一个范围清楚的任务试用，观察实际选用的模型、交接是否完整，以及结果是否满足要求。
-
-例如：
+1. Copy the `skills/subagent-manager/` folder into your personal `$HOME/.agents/skills/` directory or your project's `.agents/skills/` directory. Choose one location. If a Skill with the same name already exists, review your customized rules before replacing it.
+2. Mention `$subagent-manager` in a task, or let Codex select it based on context. If the Skill does not appear, restart Codex. See the [official installation guide](https://learn.chatgpt.com/docs/build-skills).
+3. Try an initial task and let Codex determine what is worth delegating:
 
 ```text
-使用 $subagent-manager 协助核查这份技术方案。
+Use $subagent-manager to help review this technical plan.
 
-已有资料位于项目的 materials 目录，需要提取指定字段并核对出处。
-请判断哪些部分适合独立委派，简要说明实际选用的模型和思考强度，
-主 Agent 继续负责方案分析与最终验收。
+The background materials are in ./materials/.
+Extract the required fields and verify their source locations.
+Determine which parts are worth delegating to subagents, and specify the
+model and reasoning effort parameters for each call.
+The main agent should continue the core analysis and handle final review.
 ```
 
-Skill 提供的是 Codex 在任务中读取的规则。实际执行依赖当前可用的代理工具；模型或接口不可用时，应说明情况，再选择能完成任务的路径。
+## Optional integrations
 
-## 按需接入的扩展
+The Skill provides working rules, rather than installing tools or granting model access. If a model or interface is unavailable, Codex should report the limitation and choose a workable path.
 
-只使用 Codex 内置子代理，就可以从上面的流程开始。以下部分按需要接入：
+Add the following integrations as needed:
 
-| 扩展 | 用途 | 需要准备什么 |
+| Extension | Purpose | Requirements |
 |---|---|---|
-| [AGY / Gemini](skills/subagent-manager/references/google.md) | 将材料齐备的任务交给独立 CLI | 已安装并登录的 AGY CLI；使用附带包装脚本时需要 PowerShell 7 |
-| [Grok](skills/subagent-manager/references/grok.md) | 深入检索原帖、讨论和相关资料 | 已安装并登录的 Grok CLI，以及适用的免费或订阅额度 |
-| [Grok 额度规则](skills/subagent-manager/references/grok-budget.md) | 按子任务检查账户周额度，并记录日消耗 | 可读取的实际账户用量；使用账本脚本时需要 Python 3 |
-| [Windows 代理模块](extras/windows-proxy/README.md) | 为单次 CLI 调用设置进程级网络代理 | 需要代理时，填入自己客户端实际使用的 HTTP(S) 或 Mixed 端口 |
+| [AGY / Gemini](skills/subagent-manager/references/google.md) | Hand off tasks with prepared materials to an external CLI | AGY CLI installed and logged in; PowerShell 7 for the wrapper script |
+| [Grok](skills/subagent-manager/references/grok.md) | Investigate original posts, discussions, and web sources | Grok CLI installed and logged in, with applicable free or subscription usage allowances; this workflow uses only authorized included usage |
+| [Grok quota rules](skills/subagent-manager/references/grok-budget.md) | Check weekly account usage after bounded subtasks and record daily consumption | Actual account usage snapshots; Python 3 for the ledger script |
+| [Windows proxy module](extras/windows-proxy/README.md) | Set a process-level proxy for a single CLI invocation | Direct connections do not need this; if needed, supply your client's HTTP(S) or Mixed port |
 
-Grok 交互界面的 `/usage` 查看账户每周用量和重置时间，`grok usage <SESSION_ID>` 查看某个会话的 Token 与成本。附带账本只记录输入的快照，本身不会查询账户；两类数据要分别使用。
+Keep these Grok usage metrics distinct:
 
-代理脚本是可选示例。直连环境不用配置端口或运行它；脚本也不代替 CLI 的安装和登录。
+- `/usage` in interactive mode shows weekly account usage and reset time.
+- `grok usage <SESSION_ID>` shows token counts and costs for a specific session.
+- The included ledger script saves account snapshots and records daily usage. The main agent can query usage and pass snapshots to the ledger, but the script itself does not query the account.
 
-## 适配与继续阅读
+## Adapting the workflow and documentation
 
-这份工作流保留了具体的模型偏好和 Grok 预算示例，方便读者看到一套完整做法。使用前，按自己的模型权限、工具环境、时区和额度安排调整，再根据实际结果迭代。公开评测是选型参考，不能直接换算成你的订阅可用任务数。
+Adjust model tiers, effort levels, and Grok query budgets according to your actual account permissions, tools, and schedule. Public benchmarks are a reference, not a direct predictor of your available task volume.
 
-| 想了解或调整的内容 | 对应文件 |
+| Topic | Reference |
 |---|---|
-| 实际执行的委派、交接与验收规则 | [SKILL.md](skills/subagent-manager/SKILL.md) |
-| 模型候选、思考档位与证据边界 | [模型选择](skills/subagent-manager/references/native-models.md) |
-| 顾问、执行代理、独立审查及嵌套委派 | [任务交接](skills/subagent-manager/references/delegation.md) |
-| 安装后应核对的环境和个人默认值 | [自定义规则](docs/自定义规则.md) |
-| 实践观察与后续修订依据 | [经验记录](skills/subagent-manager/references/experience.md) |
+| Delegation decisions, handoffs, and review rules | [SKILL.md](skills/subagent-manager/SKILL.md) |
+| Model candidate details, effort levels, and benchmark limits | [Model selection](skills/subagent-manager/references/native-models.md) |
+| Advisors, worker agents, independent review, and nesting | [Task handoffs](skills/subagent-manager/references/delegation.md) |
+| Environment verification and custom defaults | [Custom rules](docs/自定义规则.md) |
+| Practical notes and background on revisions | [Experience notes](skills/subagent-manager/references/experience.md) |
 
-本仓库可以独立使用，也可以按需搭配 [multi-source-search](https://github.com/LiX-Works/multi-source-search) 处理多源资料检索。版本说明见 [Releases](https://github.com/LiX-Works/subagent-manager/releases)，内容按 [MIT 许可证](LICENSE)开放。
+This Skill can be used alone or alongside [multi-source-search](https://github.com/LiX-Works/multi-source-search) for multi-channel research. See [Releases](https://github.com/LiX-Works/subagent-manager/releases) for updates. Released under the [MIT license](LICENSE).
