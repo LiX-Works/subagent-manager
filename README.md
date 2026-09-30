@@ -101,4 +101,4 @@ Adjust model tiers, effort levels, and Grok query budgets according to your actu
 | Environment verification and custom defaults | [Custom rules](docs/自定义规则.md) |
 | Practical notes and background on revisions | [Experience notes](skills/subagent-manager/references/experience.md) |
 
-This Skill can be used alone or alongside [multi-source-search](https://github.com/LiX-Works/multi-source-search) for multi-channel research. See [Releases](https://github.com/LiX-Works/subagent-manager/releases) for updates. Released under the [MIT license](LICENSE).
+This Skill can be used alone or alongside [agent-search-booster](https://github.com/LiX-Works/agent-search-booster) for multi-channel research. See [Releases](https://github.com/LiX-Works/subagent-manager/releases) for updates. Released under the [MIT license](LICENSE).

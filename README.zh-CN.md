@@ -100,4 +100,4 @@ Skill 提供工作规则，不负责安装工具或取得模型权限。模型�
 | 环境检查与个人默认值调整 | [自定义规则](docs/自定义规则.md) |
 | 实践记录与规则演进背景 | [经验记录](skills/subagent-manager/references/experience.md) |
 
-本仓库可独立使用，也可搭配 [multi-source-search](https://github.com/LiX-Works/multi-source-search) 辅助多源检索。版本变动见 [Releases](https://github.com/LiX-Works/subagent-manager/releases)，基于 [MIT 许可证](LICENSE)开源。
+本仓库可独立使用，也可搭配 [agent-search-booster](https://github.com/LiX-Works/agent-search-booster) 辅助多源检索。版本变动见 [Releases](https://github.com/LiX-Works/subagent-manager/releases)，基于 [MIT 许可证](LICENSE)开源。
