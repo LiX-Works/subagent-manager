@@ -1,54 +1,67 @@
-# 本家子代理：模型与任务优先级
+# 本家子代理：模型与任务选择
 
-这是一份可调整的个人模型路由示例：按职责细分Astra档位，按工具依赖在Luna与Gemini间选择。只约束子代理选用，不改主模型或`config.toml`。下方2026-09-23评测是历史依据，不代表当前实测或最新定价；运行前核对模型是否仍可用。
+2026-09-30更新：6.1 Sol接替旧6 Sol；Astra退出日常默认分工。主模型始终由使用者选择，本方案以6.1 Sol Ultra常驻为常见背景，不修改主模型或config.toml。
 
-## 当前默认优先级（按任务，而非固定排行榜）
+## 按任务选择代理
 
-| 子任务 | 首选 | 何时提升或更换 |
+| 子任务 | 默认候选 | 选择依据 |
 |---|---|---|
-| 常规、可核对的读取/提取、代码定位、小改动与检查，尤其依赖Codex工具环境的任务 | `gpt-6-luna`，通常Max；与Gemini相近优先级，依赖当前Skill/MCP/项目工具时优先Luna；当前不指定Ultra | 材料齐备且工具依赖低时也可选Gemini；实质遗漏或复杂判断需求可换6 Sol，文件数量多本身不强制升级 |
-| 普通至较复杂的代码、资料核验与多步分析 | `gpt-6-sol`，High、Xhigh、Max、Ultra可按难度选；难以判断时优先Xhigh | 错误代价高、条件强耦合或反复失败，可直接换6 Astra |
-| 方向判断、困难子任务与实质审查 | `gpt-6-astra`，可选Low／Medium／High／Xhigh；具体按下表的职责分档 | 不必先让较弱模型试错；先判断是否值得调用，再按难度与重要性选档 |
+| 常规、明确、易验收的读取/提取、代码定位、小改动与检查 | gpt-6-luna，通常Max | 适合承担较多常规工作；需要连续使用Codex现成Skill、MCP、搜索或项目工具时优先Luna |
+| 输入已备齐、工具依赖低的批量阅读、分类、提取与分析 | Gemini 3.8 Flash High，AGY CLI | 与Luna相近优先级；独立CLI不自动共享Codex工具体系，频繁搬运材料的成本高时选Luna |
+| 独立复杂分析、代码实现、资料核验、上下文隔离或实质审查 | gpt-6.1-sol | 按下表选档，难以判断时Xhigh；主代理已在做同一条推理链时不重复委派 |
+| 少量有任务特定依据的困难对照或兜底 | gpt-6-astra | 默认不选；确需时以Max为主、Xhigh按需，不为模型名或Advisor标签制造调用 |
 
-Luna Max与Gemini 3.8 Flash High处于相近的常规候选优先级。先判断是否需要Codex当前已配置成体系的工具：任务要连续串联Skill、MCP、搜索、浏览器或项目操作时优先Luna；输入齐备、可一次交接的批量阅读、分析和生成可选Gemini。希望Luna承担较多合适的常规工作，但不设份额或强制分派。两者不要求逐题对照或重复运行。Gemini未直接接入现成工具链不等于模型本身没有工具能力；本家子代理可用入口也以实际暴露为准。研究渠道与Grok见对应参考文件。主代理模型由用户选择，不自动让子代理继承其模型/档位。
+子代理的价值包括独立交付、并行提速、隔离嘈杂上下文和审查。即使主代理是6.1 Ultra，这些收益仍可能成立，但同型号子代理或Astra中低档不自动构成能力升级。不设Luna/Gemini的用量份额，也不强制先让较便宜模型失败。
 
-6 Sol可在High、Xhigh、Max、Ultra中按需选择，难判时Xhigh；不要因主代理是Sol Ultra就把Sol子代理一律设成Ultra。需要完整多步分析、上下文耦合或更难验收时可直接选Sol，而不是按文件数量或工作量机械升级。6 Luna通常Max，只作子代理候选；当前不指定Ultra，以本轮工具实际支持为准。3.1 Pro保持备用，不能仅凭Pro名称当作Flash的自动升级。旧5.6默认不选。
+## 6.1 Sol：思考档位
 
-## Astra：统一可选池与按职责分档
+以下为可调整建议；每个组合都须由当前工具和账户支持。
 
-**本方案的统一可选池为Low、Medium、High、Xhigh（含两端）；不自行选Max或Ultra。** 池内以下档位为任务建议，使用者的新指示优先；请求组合还须由实际工具支持。先决定是否调用Astra，再选档，不以“重要”二字自动制造一次调用。
+| 档位 | 建议用途 |
+|---|---|
+| Low | 很明确、容易验收且重视速度的任务；通常仍可交Luna |
+| Medium | 材料齐备、边界清楚，有一定分析难度 |
+| High | 一般复杂代码、多步分析、资料核验 |
+| Xhigh | 困难分析、方向咨询、关键审查；难判时默认选它 |
+| Max | 特别困难的推导、实现或疑难排查；按实测收益选择，不机械升级 |
+| Ultra | 保留可选，子代理默认不选；不能把它作为确定比Max更强或更主动委派的依据 |
 
-| 实际职责 | 通常选择 | 较难或特别重要时 |
+官方API只列Low至Max；Codex可提供Ultra，不能混为同一套参数或评测。公开说明将Ultra与最高强度推理、主动委派联系起来，但没有给出Ultra相对Max的精确单模型推理预算对照，更不能直接套用为Ultra子代理比Max子代理更主动的保证。
+
+如果需要子代理组织下一层工作，明确交代这项职责，并依据实际工具、权限、并发限制和收益判断；Max也可在明确要求下委派，Ultra不是必要条件。通常由主代理统一协调一级子代理，有明确收益时再嵌套。每一层都必须在实际调用参数中同时指定model和reasoning_effort，不能借嵌套省略参数或继承主代理档位。
+
+## Astra：少量高档对照或兜底
+
+默认不调用Astra；只有具体任务预期能获得不同模型的有效审查、补齐关键缺口或突破能力瓶颈时才考虑。需要尝试它的能力上限时以Max为主，Xhigh可依任务选用。较低档不在当前默认路线中，不按顾问或执行标签固定分配中低档。其他档位或Ultra仅在使用者另有明确指示或任务特定依据时讨论，不把Ultra当作必然更强。
+
+Advisor/Guide是一种职责，可由主代理或适合的子代理承担，不自动绑定Astra；需要独立审查也不等于必须更换模型。不同模型的第二意见不能替代来源和测试。明显适合Astra的任务可以直接交给它，无须先让6.1失败；“重要”本身不足以自动触发调用。进一步原则见[关键判断点咨询](delegation.md)。
+
+## 旧模型与其他入口
+
+旧6 Sol与5.6默认不分配常规任务，仅在使用者指定、兼容性需要或任务实测显示价值时回退；不可用时说明限制，不静默替换。
+
+| 旧模型 | 保留的最低档要求 |
+|---|---|
+| gpt-5.6-luna | Xhigh及以上 |
+| gpt-5.6-terra | High及以上 |
+| gpt-5.6-sol | 无硬下限；建议High及以上 |
+
+Luna通常Max，不指定其当前工具不支持的Ultra。Google 3.1 Pro备用，不因Pro名称当作Flash的自动升级；Google和Grok分别见相应参考文件。以上只指导子代理，不自行更换使用者的主模型。
+
+## 依据与边界（2026-09-29评测快照）
+
+[OpenAI模型页](https://developers.openai.com/api/docs/models/gpt-6.1-sol)将6.1定位为接近Astra；[Artificial Analysis的6.1页面](https://artificialanalysis.ai/models/releases/gpt-6-1-sol)和[Astra页面](https://artificialanalysis.ai/models/releases/gpt-6-astra)给出综合指数（四舍五入，不是正确率）：
+
+| 档位 | 6.1 Sol | Astra |
 |---|---|---|
-| Advisor／Guide：决定方向、方法、架构、核心解释或纠偏 | High | 很难或重要的判断用Xhigh |
-| 执行有边界的子任务：实现、推导、分析、产物制作 | Medium | 较难High；很难或重要Xhigh |
-| 独立审查 | 整体方向/核心论证按Advisor处理；局部结果核对按执行型任务处理 | 关键、很难或重要的审查可用Xhigh |
-| 其他或混合职责 | 按主导工作、判断难度和错误影响选择，不按任务标签硬套 | 以关键部分要求为准；材料不足先补必要材料 |
+| Low | 42 | 46 |
+| Medium | 48 | 50 |
+| High | 50 | 51 |
+| Xhigh | 51 | 52 |
+| Max | 52 | 53 |
 
-Low保留在可选池，**默认不使用，也不把它当作Sol Max的默认能力升级**；仅在用户明确指定或有任务特定依据时选用。常规简单工作可由主代理或Luna完成；确需Astra提供局部第二意见或核对时，通常从Medium考虑，方向性Advisor仍通常用High。不要因为任务通过子代理工具启动，就把方向顾问套成执行任务的Medium。进一步原则见[关键判断点咨询](delegation.md)。以上是用户偏好下的试行策略，不声称某个档位在每类任务上最省或最优。
+[AA编码Agent评测](https://artificialanalysis.ai/articles/gpt-6-1-sol-replaces-gpt-6-sol-after-just-7-days-with-near-astra-intelligence)中6.1 Xhigh为63、Astra Max为62、6.1 Max为60。基准、题组、框架和档位影响结果；不能推导所有任务等价、强度越高必然越好，或把小分差当确定的逐任务优势。这里也没有Ultra的可比单模型成绩。当前策略是可验收的试行分工，不宣称每类任务最优。
 
-## 5.6旧模型：默认不调用，保留历史硬下限
+本示例以免费或订阅包含额度为费用边界，不以credits核算日常工作。API价格或评测美元成本不能直接换算套餐任务数；按实际使用量、结果、返工与耗时判断收益。只用已获准免费或套餐额度，不因模型升级启用按量API、超额消费或自动充值。公开榜单会更新，保留日期并用自己的代表性任务校验。
 
-| 模型ID | 硬要求 | 默认倾向 |
-|---|---|---|
-| gpt-5.6-luna | xhigh及以上 | 简单、明确、可验收 |
-| gpt-5.6-terra | high及以上 | 常规至中等复杂分析/代码 |
-| gpt-5.6-sol | 任意支持档位 | 建议high及以上，较复杂任务 |
-
-5.6 Sol的建议不是硬下限；5.6 Luna/Terra的最低档位仍是硬要求。Astra使用上一节的Low至Xhigh可选池。旧5.6模型当前无默认任务分配，仅在用户明确要求、6模型不可用且已说明限制，或有任务特定实测依据时考虑。xhigh、max、ultra只用于实际支持且用户规则允许的型号；不能把“可以使用”误作“每次都用最高”。每次新建本家子代理仍要**在调用参数中同时写出`model`和`reasoning_effort`**；组合不可用时不得以省略字段的方式继承主代理配置。
-
-## 对照证据与旧模型的保留用途（2026-09-23）
-
-官方于2026年9月22日发布6 Sol/Luna；2026-09-23的[Codex信用额度表](https://learn.chatgpt.com/docs/pricing)显示6 Sol相对5.6 Sol约半价，输入与5.6 Terra同价且输出略低；6 Luna低于5.6 Luna。当时[Artificial Analysis](https://artificialanalysis.ai/models/releases/gpt-6-sol)综合指数：6 Sol max 48、5.6 Sol max 47；6 Luna max 37、5.6 Luna max 37。编码Agent指数在各自Codex框架为6 Sol max 57、5.6 Sol max 55；6 Luna max 41、5.6 Luna max 43。[ARC Prize](https://arcprize.org/results/openai-gpt-6-luna)的ARC-AGI-2上，6 Luna max 59.3%、5.6 Luna max 59.5%，未显示全面提升。
-
-同档对照中，6 Sol high的Artificial Analysis综合分43、5.6 Sol high为42、5.6 Terra high为34；最高档6 Sol max 48、5.6 Sol max 47、5.6 Terra max 42。API和Codex信用额度中，6 Sol比5.6 Sol便宜，输出价低于5.6 Terra。这个证据支持优先试6 Sol，但分差不代表任务成功率差异，也不证明每类任务必胜。6 Luna max与5.6 Luna max在同榜均为37，6 Luna的公开价和Codex信用额度更低，适合优先试用。
-
-因此5.6 Sol、Terra、Luna主要作任务特定回退、已验证旧流程或新模型未暴露时使用。特别是知识工作完整性：独立评测观察到6 Sol/Luna在部分任务省略了要求项；重要文档应保留主代理核对，必要时用5.6 Sol作对照。旧模型不因版本号直接禁用。
-
-定价是API/信用额度计量的参照，**不是订阅账户可用Token的承诺**。对同一任务的实际耗额仍受上下文、缓存、思考、工具与重试影响；Google/Grok订阅不能用API价格直接估算。
-
-以上数值是2026-09-23的比较快照；使用前可复查[OpenAI定价](https://learn.chatgpt.com/docs/pricing)、[Artificial Analysis的6 Sol条目](https://artificialanalysis.ai/models/releases/gpt-6-sol)、[6 Luna条目](https://artificialanalysis.ai/models/releases/gpt-6-luna)与[ARC Prize原始结果](https://arcprize.org/results/openai-gpt-6-luna)。这些来源的榜单与价格会更新，不能把本段作为实时排名。
-
-可按难度选、表现不佳换更强模型，说明实际组合。不默认继承主模型/强度。组合不可用或环境不允许显式选择/委派时说明，不谎称已用指定模型，继续可做部分。
-
-按当前spawn工具说明调用；显式覆盖要求fork_turns为none或有限轮数时遵守并传足够任务上下文。是否Ultra不构成额外调用门槛，也不是扩员理由。没有必须先让某个较便宜模型失败的升级流程；常规任务在Luna与Gemini间按工具依赖、材料完整性和交接成本选择。
+2026-09-30本次最小运行验证：Luna Max在明确要求下成功创建下一层Luna Max；显式请求6.1 Sol Ultra的子代理完成只读任务，但没有继续委派。这只证明当时的创建和嵌套能力，不证明Ultra子代理更主动。模型选项与[官方委派说明](https://learn.chatgpt.com/docs/agent-configuration/subagents)仍须结合当前实际环境核对。

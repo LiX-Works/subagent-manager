@@ -1,6 +1,6 @@
 # subagent-manager
 
-一份可改造的 **Codex 子代理工作流 Skill**：判断何时委派、在 Luna／Sol／Astra 间选择模型与思考档位、把难题交给顾问或执行代理，并验收结果。它也包含可选的 Gemini AGY CLI、Grok CLI 路径，以及 Grok 每周额度查询和按日预算的规则。
+一份可改造的 **Codex 子代理工作流 Skill**：判断何时委派、在 Luna／6.1 Sol／Astra 间选择模型与思考档位、把独立任务交给执行或审查代理，并验收结果。日常主要用Luna、Gemini和6.1；Astra保留为少量高档对照或兜底。它也包含可选的 Gemini AGY CLI、Grok CLI 路径，以及 Grok 每周额度查询和按日预算的规则。
 
 这里发布的是一套**有具体模型偏好和额度阈值的个人工作流案例**，不是对所有账户的最优配置或克隆后即用的工具包。模型、档位、可用代理工具、订阅和 CLI 版本会变化；先按[适配说明](docs/自定义规则.md)核对自己的环境。历史评测数字有日期，仅作选择依据，不是实时排名。[Codex 定价与用量](https://learn.chatgpt.com/docs/pricing)也提示订阅额度不能直接按公开价格换算。
 
@@ -16,6 +16,8 @@
 将 `skills/subagent-manager/` 整个文件夹复制到自己的 `$HOME/.agents/skills/`；也可放进项目的 `.agents/skills/`。已有同名 Skill 时先比较，不直接覆盖。Codex 通常会发现 Skill 变更，若当前任务未显示，可重启 Codex 后检查。[官方 Skill 文档](https://learn.chatgpt.com/docs/build-skills)
 
 在任务中提到 `$subagent-manager`，或让 Codex 按请求自动选用。先用一个范围清楚的任务测试：当前环境是否能在子代理调用参数中显式指定模型和思考强度，以及实际返回的模型是否符合选择。模型或 CLI 不可用时应说明并跳过对应路径，不用提示词假装切换成功。
+
+主代理已使用6.1 Ultra时，委派重点是分担工作、隔离上下文与独立审查，不把另开同型号代理自动当成能力升级。子代理Ultra保留可选但默认不选，也不保证更主动；需要下一层委派时明确交代职责，Max也可在工具允许时执行。
 
 AGY 和 Grok **均为可选依赖**；只使用本家 Codex 子代理时无需安装它们。若要启用外部 CLI，请自行安装和登录，并先验证当前模型、调用参数、权限与计费方式。AGY 包装脚本默认不指定代理，按进程继承的网络环境运行；需要代理时显式传入实际 HTTP(S) 或 Mixed 端口。Grok `grok usage <SESSION_ID>`查看指定会话的 Token／成本，交互界面 `/usage`查看账户周额度，两者不是同一个统计量。
 
