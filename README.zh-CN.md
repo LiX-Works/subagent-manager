@@ -42,7 +42,7 @@
 | **Gemini 3.8 Flash High** *(通过可选 AGY CLI)* | 材料齐备的批量阅读、分类、提取与分析 | 输入已备齐、很少需要主 Agent 代跑工具的任务。AGY 有自己的工具与 MCP 能力，但不会自动共享 Codex 中已配置的 Skill、MCP 和搜索入口 |
 | **GPT-6.1 Sol** | 复杂独立任务、方案审查与需要上下文隔离的工作 | 复杂任务通常选 High；难以判断难度时默认 Xhigh；其余档位按需选用 |
 | **GPT-6 Astra** | 少量专项对照或兜底检查 | 默认不选；有具体理由期待额外收益时才用，主要考虑 Max，Xhigh 按需。Advisor 是工作职责，并不自动绑定 Astra |
-| **Grok CLI** *(可选)* | X 原帖与讨论串研究，以及有价值的网页调研与核验 | 适合追踪原始讨论、多方立场或时效性信息，支持在额度兜底下的深入连续查询 |
+| **Grok CLI** *(可选)* | X 原帖与讨论串研究，以及有价值的网页调研与核验 | 搜索增强能帮助任务就非常鼓励调用，可深入追查；单日消耗周额度超过30%只提醒，不暂停研究或限制后续派发 |
 
 ### 显式指定模型与思考强度
 
@@ -79,7 +79,7 @@ Skill 提供工作规则，不负责安装工具或取得模型权限。模型�
 |---|---|---|
 | [AGY / Gemini](skills/subagent-manager/references/google.md) | 将材料齐备的任务交给独立外部 CLI 处理 | 已安装并登录 AGY CLI；附带包装脚本需要 PowerShell 7 |
 | [Grok](skills/subagent-manager/references/grok.md) | 检索原帖、社群讨论与补充网页资料 | 已安装并登录 Grok CLI，有适用的免费或订阅额度；本工作流仅使用已授权的免费或套餐自带额度 |
-| [Grok 额度规则](skills/subagent-manager/references/grok-budget.md) | 在有边界的子任务后检查账户周用量，记录日消耗 | 实际账户用量快照；账本脚本需要 Python 3 |
+| [Grok 额度规则](skills/subagent-manager/references/grok-budget.md) | 合并研究单元后查用量，单日消耗周额度超过30%仅提醒 | 默认每5个有效研究单元检查；快照账本需要 Python 3 |
 | [Windows 代理模块](extras/windows-proxy/README.md) | 为单次 CLI 调用设置进程级网络代理 | 直连网络无需使用；需要时填入本机客户端实际的 HTTP(S) 或 Mixed 端口 |
 
 使用 Grok 时请区分三类用量概念：

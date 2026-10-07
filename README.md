@@ -42,7 +42,7 @@ These default candidates reflect practical tradeoffs between task requirements a
 | **Gemini 3.8 Flash High** *(via optional AGY CLI)* | Batch reading, classification, extraction, and analysis with materials ready | Tasks with prepared inputs that need little support from the main agent. AGY has its own tools and MCP support, but does not automatically share the Skills, MCP integrations, or search tools configured in Codex |
 | **GPT-6.1 Sol** | Complex independent tasks, plan review, and separate-context analysis | Usually High for complex tasks; default to Xhigh when difficulty is hard to assess; other levels as needed |
 | **GPT-6 Astra** | Occasional specialized comparisons or fallbacks | Not selected by default; use when there is a concrete reason to expect added value, mainly Max with Xhigh as needed. Advisor is a role, not bound to Astra |
-| **Grok CLI** *(optional)* | Research on X posts and threads, plus useful web research and verification | Situations that benefit from original discussions, diverse perspectives, or fast updates. Supports sequential queries under quota safeguards |
+| **Grok CLI** *(optional)* | Research on X posts and threads, plus useful web research and verification | Strongly encouraged whenever search enhancement helps the task. Daily use above 30% of the weekly allowance triggers a reminder that does not pause research or restrict further dispatch |
 
 ### Explicit model and reasoning parameters
 
@@ -80,7 +80,7 @@ Add the following integrations as needed:
 |---|---|---|
 | [AGY / Gemini](skills/subagent-manager/references/google.md) | Hand off tasks with prepared materials to an external CLI | AGY CLI installed and logged in; PowerShell 7 for the wrapper script |
 | [Grok](skills/subagent-manager/references/grok.md) | Investigate original posts, discussions, and web sources | Grok CLI installed and logged in, with applicable free or subscription usage allowances; this workflow uses only authorized included usage |
-| [Grok quota rules](skills/subagent-manager/references/grok-budget.md) | Check weekly account usage after bounded subtasks and record daily consumption | Actual account usage snapshots; Python 3 for the ledger script |
+| [Grok quota rules](skills/subagent-manager/references/grok-budget.md) | Check usage after grouped research units; notify above 30% daily consumption of the weekly allowance | Default: 5 substantive research units per check; Python 3 for the snapshot ledger |
 | [Windows proxy module](extras/windows-proxy/README.md) | Set a process-level proxy for a single CLI invocation | Direct connections do not need this; if needed, supply your client's HTTP(S) or Mixed port |
 
 Keep these Grok usage metrics distinct:
